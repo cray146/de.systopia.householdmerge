@@ -153,8 +153,7 @@ class CRM_Householdmerge_Logic_Scanner {
     $candidates = array();
     $scanner_sql = "
       SELECT *
-        FROM (SELECT civicrm_contact.id AS contact_id,
-                     GROUP_CONCAT(civicrm_contact.id SEPARATOR '||') AS contact_ids,
+        FROM (SELECT GROUP_CONCAT(civicrm_contact.id SEPARATOR '||') AS contact_ids,
                      GROUP_CONCAT(civicrm_contact.display_name SEPARATOR '||') AS display_names,
                      GROUP_CONCAT(civicrm_contact.gender_id SEPARATOR '||') AS gender_ids,
                      civicrm_contact.last_name AS last_name,
@@ -175,10 +174,11 @@ class CRM_Householdmerge_Logic_Scanner {
                 AND (civicrm_address.postal_code IS NOT NULL AND civicrm_address.postal_code != '')
                 AND (civicrm_address.city IS NOT NULL AND civicrm_address.city != '')
                 $RELATIONSHIP_CONDITION
-              GROUP BY civicrm_contact.last_name, civicrm_address.street_address, civicrm_address.postal_code, civicrm_address.city) households
+              GROUP BY civicrm_contact.last_name, civicrm_address.street_address, civicrm_address.supplemental_address_1, civicrm_address.supplemental_address_2, civicrm_address.postal_code, civicrm_address.city, civicrm_address.country_id) households
         WHERE mitgliederzahl >= $minimum_member_count
         $limit_clause;
       ";
+
     $scanner = CRM_Core_DAO::executeQuery($scanner_sql);
     while ($scanner->fetch()) {
       $candidates[$scanner->contact_id] = array(
