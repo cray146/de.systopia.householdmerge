@@ -156,7 +156,7 @@ class CRM_Householdmerge_Logic_Scanner {
         FROM (SELECT GROUP_CONCAT(civicrm_contact.id SEPARATOR '||') AS contact_ids,
                      GROUP_CONCAT(civicrm_contact.display_name SEPARATOR '||') AS display_names,
                      GROUP_CONCAT(civicrm_contact.gender_id SEPARATOR '||') AS gender_ids,
-                     civicrm_contact.last_name AS last_name,
+                     GROUP_CONCAT(DISTINCT civicrm_contact.last_name SEPARATOR ' - ') AS last_name,
                      civicrm_address.street_address AS street_address,
                      civicrm_address.supplemental_address_1 AS supplemental_address_1,
                      civicrm_address.supplemental_address_2 AS supplemental_address_2,
@@ -174,14 +174,14 @@ class CRM_Householdmerge_Logic_Scanner {
                 AND (civicrm_address.postal_code IS NOT NULL AND civicrm_address.postal_code != '')
                 AND (civicrm_address.city IS NOT NULL AND civicrm_address.city != '')
                 $RELATIONSHIP_CONDITION
-              GROUP BY civicrm_contact.last_name, civicrm_address.street_address, civicrm_address.supplemental_address_1, civicrm_address.supplemental_address_2, civicrm_address.postal_code, civicrm_address.city, civicrm_address.country_id) households
+              GROUP BY civicrm_address.street_address, civicrm_address.supplemental_address_1, civicrm_address.supplemental_address_2, civicrm_address.postal_code, civicrm_address.city, civicrm_address.country_id) households
         WHERE mitgliederzahl >= $minimum_member_count
         $limit_clause;
       ";
 
     $scanner = CRM_Core_DAO::executeQuery($scanner_sql);
     while ($scanner->fetch()) {
-      $candidates[$scanner->contact_id] = array(
+      $candidates[] = array(
         'contact_ids'            => $scanner->contact_ids,
         'display_names'          => $scanner->display_names,
         'gender_ids'             => $scanner->gender_ids,
@@ -193,6 +193,8 @@ class CRM_Householdmerge_Logic_Scanner {
         'country_id'             => $scanner->country_id,
         'last_name'              => $scanner->last_name);
     }
+    Civi::log()->debug("candidates: " . print_r($candidates, TRUE));
+
     return $candidates;
   }
 
